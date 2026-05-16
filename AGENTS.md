@@ -83,9 +83,17 @@ bioweb/
 
 ### 配置管理
 
-- 密码认证 (`121212`) 保护配置修改
+- 双重密码认证：聊天页面 (`121212`) + 设置面板 (`212121`)
 - 配置保存使用深合并 (deep merge)，更新 model 不会丢失 command/extraArgs
 - 支持切换 activeAgent (claude/copilot/qoder) 和各自的模型
+
+### 文件附件（Copilot模式）
+
+- 当 activeAgent 为 `copilot` 时，输入框左下角显示 "+" 按钮
+- 支持上传图片、PDF、代码文件等作为附件
+- 通过 `--attachment <path>` 参数传递给 Copilot CLI
+- 上传文件临时存储在 `server/data/uploads/`，处理完后自动清理
+- 请求使用 `multipart/form-data` 格式（含附件时）或 JSON（无附件时）
 
 ### 文件管理器
 
@@ -124,7 +132,8 @@ cd client && npm run dev  # 前端 (端口 5173，代理到 3000)
 
 ### 配置项
 
-- 密码: `121212`（config 面板访问密码）
+- 聊天页面密码: `121212`（进入网站）
+- 设置面板密码: `212121`（管理配置）
 - 默认 Agent: `claude`
 - 模型配置: 通过配置面板可视化修改
 

@@ -84,11 +84,12 @@ export default function ChatView({ config, sessionId, onSessionCreated, onSessio
     } catch {}
   }
 
-  const handleSend = async (text) => {
+  const handleSend = async (text, attachment = null) => {
     if (!text.trim() || isStreaming) return
 
     const sid = await ensureSession()
     const userMsg = { role: 'user', content: text, timestamp: Date.now() }
+    if (attachment) userMsg.attachmentName = attachment.name
     setMessages(prev => [...prev, userMsg])
     setIsStreaming(true)
     setStreamingContent('')
@@ -101,18 +102,30 @@ export default function ChatView({ config, sessionId, onSessionCreated, onSessio
     abortRef.current = abortController
 
     try {
-      const body = { message: text }
-      // Use --resume if we have a previous agent session
-      if (agentSessionId) {
-        body.resumeSessionId = agentSessionId
+      let fetchOptions
+      if (attachment) {
+        // Use FormData for file upload
+        const formData = new FormData()
+        formData.append('message', text)
+        formData.append('attachment', attachment)
+        if (agentSessionId) formData.append('resumeSessionId', agentSessionId)
+        fetchOptions = {
+          method: 'POST',
+          body: formData,
+          signal: abortController.signal
+        }
+      } else {
+        const body = { message: text }
+        if (agentSessionId) body.resumeSessionId = agentSessionId
+        fetchOptions = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal: abortController.signal
+        }
       }
 
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        signal: abortController.signal
-      })
+      const response = await fetch('/api/chat', fetchOptions)
 
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
@@ -285,6 +298,7 @@ export default function ChatView({ config, sessionId, onSessionCreated, onSessio
             onSend={handleSend}
             onStop={handleStop}
             isStreaming={isStreaming}
+            showAttachment={config?.activeAgent === 'copilot'}
           />
           <p className="text-center text-xs text-bio-400/60 mt-2">
             BioWeb 可能会出错，请核实重要信息

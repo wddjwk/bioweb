@@ -14,6 +14,10 @@ class CopilotAgent extends BaseAgent {
       args.push(`--resume=${options.resumeSessionId}`);
     }
 
+    if (options.attachmentPath) {
+      args.push('--attachment', options.attachmentPath);
+    }
+
     if (this.config.extraArgs) {
       args.push(...this.config.extraArgs);
     }
