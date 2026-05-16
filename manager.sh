@@ -64,22 +64,21 @@ do_start() {
     exit 1
   fi
 
-  # Install dependencies if needed
-  if [ ! -d "$SCRIPT_DIR/node_modules" ]; then
+  # Install server dependencies
+  if [ ! -d "$SCRIPT_DIR/node_modules" ] || [ "$SCRIPT_DIR/package.json" -nt "$SCRIPT_DIR/node_modules/.package-lock.json" ]; then
     echo "   Installing server dependencies..."
     cd "$SCRIPT_DIR" && npm install --registry=https://registry.npmmirror.com --production --quiet 2>&1 | tail -3
   fi
 
-  if [ ! -d "$SCRIPT_DIR/client/node_modules" ]; then
+  # Install client dependencies
+  if [ ! -d "$SCRIPT_DIR/client/node_modules" ] || [ "$SCRIPT_DIR/client/package.json" -nt "$SCRIPT_DIR/client/node_modules/.package-lock.json" ]; then
     echo "   Installing client dependencies..."
     cd "$SCRIPT_DIR/client" && npm install --registry=https://registry.npmmirror.com --quiet 2>&1 | tail -3
   fi
 
-  # Build frontend if not built
-  if [ ! -d "$SCRIPT_DIR/client/dist" ]; then
-    echo "   Building frontend..."
-    cd "$SCRIPT_DIR/client" && npm run build 2>&1 | tail -3
-  fi
+  # Build frontend (always rebuild to ensure latest code)
+  echo "   Building frontend..."
+  cd "$SCRIPT_DIR/client" && npm run build 2>&1 | tail -3
 
   # Start server
   cd "$SCRIPT_DIR"
