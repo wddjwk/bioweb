@@ -1,0 +1,173 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles */
+:root {
+  --bg-primary: #fefdf8;
+  --text-primary: #1a1a2e;
+  --accent-green: #22c55e;
+  --accent-green-light: #dcfce7;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Markdown rendering styles */
+.markdown-body {
+  line-height: 1.75;
+  font-size: 15px;
+}
+
+.markdown-body h1 { font-size: 1.5em; font-weight: 700; margin: 1em 0 0.5em; color: #166534; }
+.markdown-body h2 { font-size: 1.3em; font-weight: 600; margin: 0.8em 0 0.4em; color: #15803d; }
+.markdown-body h3 { font-size: 1.1em; font-weight: 600; margin: 0.6em 0 0.3em; color: #16a34a; }
+
+.markdown-body p { margin: 0.5em 0; }
+
+.markdown-body ul, .markdown-body ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.markdown-body li { margin: 0.25em 0; }
+
+.markdown-body blockquote {
+  border-left: 3px solid #86efac;
+  padding: 0.5em 1em;
+  margin: 0.5em 0;
+  background: rgba(220, 252, 231, 0.3);
+  border-radius: 0 8px 8px 0;
+}
+
+.markdown-body code {
+  background: rgba(220, 252, 231, 0.4);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  color: #166534;
+}
+
+.markdown-body pre {
+  background: #1e293b;
+  border-radius: 10px;
+  padding: 1em;
+  overflow-x: auto;
+  margin: 0.75em 0;
+  position: relative;
+}
+
+.markdown-body pre code {
+  background: none;
+  color: #e2e8f0;
+  padding: 0;
+  font-size: 0.85em;
+}
+
+.markdown-body table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.75em 0;
+  font-size: 0.9em;
+}
+
+.markdown-body th {
+  background: rgba(220, 252, 231, 0.5);
+  font-weight: 600;
+  text-align: left;
+  padding: 0.5em 0.75em;
+  border-bottom: 2px solid #86efac;
+}
+
+.markdown-body td {
+  padding: 0.5em 0.75em;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.markdown-body tr:hover td {
+  background: rgba(240, 253, 244, 0.5);
+}
+
+.markdown-body a {
+  color: #16a34a;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.markdown-body a:hover {
+  color: #15803d;
+}
+
+.markdown-body img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+.markdown-body hr {
+  border: none;
+  border-top: 1px solid #dcfce7;
+  margin: 1em 0;
+}
+
+/* Highlight.js overrides for dark code blocks */
+.markdown-body pre .hljs { background: transparent; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #bbf7d0; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #86efac; }
+
+/* Hide scrollbar for textarea input */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Thin scrollbar for sidebar */
+.scrollbar-thin::-webkit-scrollbar { width: 3px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
+
+/* Thinking animation */
+@keyframes thinking-dots {
+  0%, 20% { content: '.'; }
+  40% { content: '..'; }
+  60% { content: '...'; }
+  80%, 100% { content: ''; }
+}
+
+.thinking-indicator::after {
+  content: '';
+  animation: thinking-dots 1.5s infinite;
+}
+
+/* Flower decorations */
+.flower-decoration {
+  pointer-events: none;
+  position: fixed;
+  z-index: 0;
+  opacity: 0.12;
+  filter: blur(0.5px);
+}
+
+/* Input area glow */
+.input-glow {
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.1),
+              0 2px 12px rgba(34, 197, 94, 0.06);
+  transition: box-shadow 0.3s ease;
+}
+
+.input-glow:focus-within {
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2),
+              0 4px 20px rgba(34, 197, 94, 0.1);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .markdown-body { font-size: 14px; }
+  .markdown-body pre { font-size: 12px; padding: 0.75em; }
+  .markdown-body table { font-size: 0.8em; display: block; overflow-x: auto; }
+}

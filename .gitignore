@@ -1,0 +1,10 @@
+node_modules/
+dist/
+server/data/
+server/config/settings.json
+*.log
+.DS_Store
+.env
+/tmp/
+.bioweb.pid
+files/
