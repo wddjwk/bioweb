@@ -55,15 +55,27 @@ function PasswordGate({ onAuth, onClose }) {
   )
 }
 
-function AgentConfig({ config, password, onUpdate }) {
-  const [activeAgent, setActiveAgent] = useState(config?.activeAgent || 'claude')
-  const [agents, setAgents] = useState(config?.agents || {})
-  const [showThinking, setShowThinking] = useState(config?.showThinking ?? true)
-  const [showToolCalls, setShowToolCalls] = useState(config?.showToolCalls ?? true)
+function AgentConfig({ config, password, onSaved }) {
+  const [activeAgent, setActiveAgent] = useState('')
+  const [agents, setAgents] = useState({})
+  const [showThinking, setShowThinking] = useState(true)
+  const [showToolCalls, setShowToolCalls] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [saveMsg, setSaveMsg] = useState('')
+
+  // Always sync from config prop
+  useEffect(() => {
+    if (config) {
+      setActiveAgent(config.activeAgent || 'claude')
+      setAgents(config.agents || {})
+      setShowThinking(config.showThinking ?? true)
+      setShowToolCalls(config.showToolCalls ?? true)
+    }
+  }, [config])
 
   const handleSave = async () => {
     setSaving(true)
+    setSaveMsg('')
     try {
       const res = await fetch('/api/config', {
         method: 'PUT',
@@ -71,10 +83,16 @@ function AgentConfig({ config, password, onUpdate }) {
         body: JSON.stringify({ activeAgent, agents, showThinking, showToolCalls })
       })
       if (res.ok) {
-        const data = await res.json()
-        onUpdate(data.config)
+        setSaveMsg('✅ 保存成功')
+        setTimeout(() => setSaveMsg(''), 2000)
+        // Notify parent to reload config from server
+        onSaved()
+      } else {
+        setSaveMsg('❌ 保存失败')
       }
-    } catch {}
+    } catch {
+      setSaveMsg('❌ 连接失败')
+    }
     setSaving(false)
   }
 
@@ -158,6 +176,7 @@ function AgentConfig({ config, password, onUpdate }) {
       >
         {saving ? '保存中...' : <><Save className="w-4 h-4" /> 保存配置</>}
       </button>
+      {saveMsg && <p className="text-center text-sm">{saveMsg}</p>}
     </div>
   )
 }
@@ -187,24 +206,43 @@ function SkillManager({ password }) {
   )
 }
 
-export default function ConfigPanel({ config, authed, onAuth, onClose, onConfigUpdate }) {
-  const [password, setPassword] = useState('')
-  const [isAuthed, setIsAuthed] = useState(authed)
+export default function ConfigPanel({ config, password: initialPassword, onClose, onConfigReload, onPasswordSet }) {
+  const [pwd, setPwd] = useState(initialPassword || '')
+  const [isAuthed, setIsAuthed] = useState(!!initialPassword)
   const [tab, setTab] = useState('agent')
   const [fullConfig, setFullConfig] = useState(null)
 
-  const handleAuth = async (pwd) => {
-    setPassword(pwd)
-    setIsAuthed(true)
-    onAuth()
-    // Load full config
+  // Fetch full config when authed (on mount or after login)
+  useEffect(() => {
+    if (isAuthed && pwd) {
+      fetchFullConfig()
+    }
+  }, [isAuthed])
+
+  const fetchFullConfig = async () => {
     try {
       const res = await fetch('/api/config/full', {
         headers: { 'x-auth-password': pwd }
       })
-      const data = await res.json()
-      setFullConfig(data)
+      if (res.ok) {
+        const data = await res.json()
+        setFullConfig(data)
+      }
     } catch {}
+  }
+
+  const handleAuth = (enteredPwd) => {
+    setPwd(enteredPwd)
+    setIsAuthed(true)
+    // Persist password in App so re-opening panel preserves auth
+    onPasswordSet?.(enteredPwd)
+  }
+
+  const handleSaved = async () => {
+    // Re-fetch full config to sync local state
+    await fetchFullConfig()
+    // Notify App to reload its config too
+    onConfigReload()
   }
 
   return (
@@ -248,11 +286,11 @@ export default function ConfigPanel({ config, authed, onAuth, onClose, onConfigU
               {tab === 'agent' && (
                 <AgentConfig
                   config={fullConfig || config}
-                  password={password}
-                  onUpdate={onConfigUpdate}
+                  password={pwd}
+                  onSaved={handleSaved}
                 />
               )}
-              {tab === 'skills' && <SkillManager password={password} />}
+              {tab === 'skills' && <SkillManager password={pwd} />}
             </>
           )}
         </div>

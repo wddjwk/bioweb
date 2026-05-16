@@ -75,15 +75,23 @@ export default function App() {
   const [chatAuthed, setChatAuthed] = useState(() => sessionStorage.getItem('bioweb-chat-auth') === '1')
   const [showConfig, setShowConfig] = useState(false)
   const [config, setConfig] = useState(null)
-  const [authed, setAuthed] = useState(false)
+  const [settingsPassword, setSettingsPassword] = useState(() => sessionStorage.getItem('bioweb-settings-pwd') || '')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   // Session management
   const [sessions, setSessions] = useState([])
   const [currentSessionId, setCurrentSessionId] = useState(null)
 
+  const loadConfig = async () => {
+    try {
+      const res = await fetch('/api/config')
+      const data = await res.json()
+      setConfig(data)
+    } catch {}
+  }
+
   useEffect(() => {
-    fetch('/api/config').then(r => r.json()).then(setConfig).catch(() => {})
+    loadConfig()
     loadSessions()
   }, [])
 
@@ -163,10 +171,13 @@ export default function App() {
       {showConfig && (
         <ConfigPanel
           config={config}
-          authed={authed}
-          onAuth={() => setAuthed(true)}
+          password={settingsPassword}
           onClose={() => setShowConfig(false)}
-          onConfigUpdate={setConfig}
+          onPasswordSet={(pwd) => {
+            setSettingsPassword(pwd)
+            sessionStorage.setItem('bioweb-settings-pwd', pwd)
+          }}
+          onConfigReload={loadConfig}
         />
       )}
     </div>
