@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { Plus, MessageSquare, Trash2, Menu, Settings, ChevronLeft } from 'lucide-react'
+import { Plus, MessageSquare, Trash2, Menu, Settings, ChevronLeft, User, LogOut } from 'lucide-react'
 
 export default function Sidebar({ 
-  sessions, currentSessionId, 
+  sessions, currentSessionId, username,
   onNewChat, onSelectSession, onDeleteSession, 
-  onOpenSettings, collapsed, onToggleCollapse 
+  onOpenSettings, onLogout, collapsed, onToggleCollapse 
 }) {
   const [hoveredId, setHoveredId] = useState(null)
 
@@ -105,7 +105,22 @@ export default function Sidebar({
             </div>
 
             {/* Footer */}
-            <div className="border-t border-bio-100/30 px-3 py-2">
+            <div className="border-t border-bio-100/30 px-3 py-2 space-y-1">
+              {username && (
+                <div className="flex items-center justify-between px-3 py-1.5">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <User className="w-3.5 h-3.5" />
+                    <span>{username}</span>
+                  </div>
+                  <button
+                    onClick={onLogout}
+                    className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-400 transition-colors"
+                    title="退出登录"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
               <button
                 onClick={onOpenSettings}
                 className="w-full flex items-center gap-2 px-3 py-2 rounded-lg

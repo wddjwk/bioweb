@@ -3,7 +3,7 @@ import ChatMessage from './ChatMessage'
 import ChatInput from './ChatInput'
 import { Leaf } from 'lucide-react'
 
-export default function ChatView({ config, sessionId, onSessionCreated, onSessionUpdated }) {
+export default function ChatView({ config, sessionId, username, onSessionCreated, onSessionUpdated }) {
   const [messages, setMessages] = useState([])
   const [isStreaming, setIsStreaming] = useState(false)
   const [streamingContent, setStreamingContent] = useState('')
@@ -35,7 +35,7 @@ export default function ChatView({ config, sessionId, onSessionCreated, onSessio
 
   const loadSession = async (id) => {
     try {
-      const res = await fetch(`/api/sessions/${id}`)
+      const res = await fetch(`/api/sessions/${id}?user=${encodeURIComponent(username)}`)
       const data = await res.json()
       setMessages(data.messages || [])
       setAgentSessionId(data.agentSessionId || null)
@@ -51,7 +51,7 @@ export default function ChatView({ config, sessionId, onSessionCreated, onSessio
       const res = await fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agent: config?.activeAgent || 'claude' })
+        body: JSON.stringify({ agent: config?.activeAgent || 'claude', user: username })
       })
       const session = await res.json()
       currentSessionRef.current = session.id
@@ -67,7 +67,7 @@ export default function ChatView({ config, sessionId, onSessionCreated, onSessio
       const res = await fetch(`/api/sessions/${sid}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message })
+        body: JSON.stringify({ message, user: username })
       })
       const updated = await res.json()
       onSessionUpdated({ id: sid, title: updated.title, updatedAt: updated.updatedAt })
@@ -79,7 +79,7 @@ export default function ChatView({ config, sessionId, onSessionCreated, onSessio
       await fetch(`/api/sessions/${sid}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agentSessionId: aSessionId })
+        body: JSON.stringify({ agentSessionId: aSessionId, user: username })
       })
     } catch {}
   }

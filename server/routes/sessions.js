@@ -4,36 +4,39 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const router = express.Router();
 
-const SESSIONS_DIR = path.join(__dirname, '..', 'data', 'sessions');
+const SESSIONS_BASE = path.join(__dirname, '..', 'data', 'sessions');
 
-function ensureDir() {
-  fs.mkdirSync(SESSIONS_DIR, { recursive: true });
+function userDir(user) {
+  const safe = (user || 'default').replace(/[^a-zA-Z0-9_\-]/g, '_');
+  const dir = path.join(SESSIONS_BASE, safe);
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
 }
 
-function loadSession(id) {
-  const file = path.join(SESSIONS_DIR, `${id}.json`);
+function loadSession(user, id) {
+  const file = path.join(userDir(user), `${id}.json`);
   if (fs.existsSync(file)) {
     return JSON.parse(fs.readFileSync(file, 'utf-8'));
   }
   return null;
 }
 
-function saveSession(session) {
-  ensureDir();
+function saveSession(user, session) {
   fs.writeFileSync(
-    path.join(SESSIONS_DIR, `${session.id}.json`),
+    path.join(userDir(user), `${session.id}.json`),
     JSON.stringify(session, null, 2)
   );
 }
 
-// GET /api/sessions - List all sessions
+// GET /api/sessions?user=xxx
 router.get('/', (req, res) => {
-  ensureDir();
+  const user = req.query.user || 'default';
   try {
-    const files = fs.readdirSync(SESSIONS_DIR).filter(f => f.endsWith('.json'));
+    const dir = userDir(user);
+    const files = fs.readdirSync(dir).filter(f => f.endsWith('.json'));
     const sessions = files.map(f => {
       try {
-        const data = JSON.parse(fs.readFileSync(path.join(SESSIONS_DIR, f), 'utf-8'));
+        const data = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf-8'));
         return {
           id: data.id,
           title: data.title,
@@ -52,31 +55,35 @@ router.get('/', (req, res) => {
   }
 });
 
-// POST /api/sessions - Create new session
+// POST /api/sessions
 router.post('/', (req, res) => {
+  const user = req.body.user || 'default';
   const session = {
     id: uuidv4(),
     title: '新对话',
     agent: req.body.agent || 'claude',
+    user,
     agentSessionId: null,
     messages: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
-  saveSession(session);
+  saveSession(user, session);
   res.json(session);
 });
 
-// GET /api/sessions/:id - Get session detail
+// GET /api/sessions/:id
 router.get('/:id', (req, res) => {
-  const session = loadSession(req.params.id);
+  const user = req.query.user || 'default';
+  const session = loadSession(user, req.params.id);
   if (!session) return res.status(404).json({ error: 'Session not found' });
   res.json(session);
 });
 
-// PUT /api/sessions/:id - Update session (title, agentSessionId, add messages)
+// PUT /api/sessions/:id
 router.put('/:id', (req, res) => {
-  const session = loadSession(req.params.id);
+  const user = req.body.user || req.query.user || 'default';
+  const session = loadSession(user, req.params.id);
   if (!session) return res.status(404).json({ error: 'Session not found' });
   
   if (req.body.title !== undefined) session.title = req.body.title;
@@ -85,19 +92,19 @@ router.put('/:id', (req, res) => {
   if (req.body.message) {
     session.messages = session.messages || [];
     session.messages.push(req.body.message);
-    // Auto-generate title from first user message
     if (session.title === '新对话' && req.body.message.role === 'user') {
       session.title = req.body.message.content.slice(0, 30) + (req.body.message.content.length > 30 ? '...' : '');
     }
   }
   session.updatedAt = new Date().toISOString();
-  saveSession(session);
+  saveSession(user, session);
   res.json(session);
 });
 
 // DELETE /api/sessions/:id
 router.delete('/:id', (req, res) => {
-  const file = path.join(SESSIONS_DIR, `${req.params.id}.json`);
+  const user = req.query.user || 'default';
+  const file = path.join(userDir(user), `${req.params.id}.json`);
   if (fs.existsSync(file)) {
     fs.unlinkSync(file);
     return res.json({ success: true });
